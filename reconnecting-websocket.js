@@ -206,7 +206,11 @@
         };
 
         this.open = function (reconnectAttempt) {
-            ws = new WebSocket(self.url, protocols || []);
+            var url = self.url;
+            if( self.url instanceof Function) {
+                url = self.url();
+            }
+            ws = new WebSocket(url, protocols || []);
             ws.binaryType = this.binaryType;
 
             if (reconnectAttempt) {
@@ -219,13 +223,13 @@
             }
 
             if (self.debug || ReconnectingWebSocket.debugAll) {
-                console.debug('ReconnectingWebSocket', 'attempt-connect', self.url);
+                console.debug('ReconnectingWebSocket', 'attempt-connect', url);
             }
 
             var localWs = ws;
             var timeout = setTimeout(function() {
                 if (self.debug || ReconnectingWebSocket.debugAll) {
-                    console.debug('ReconnectingWebSocket', 'connection-timeout', self.url);
+                    console.debug('ReconnectingWebSocket', 'connection-timeout', url);
                 }
                 timedOut = true;
                 localWs.close();
@@ -235,7 +239,7 @@
             ws.onopen = function(event) {
                 clearTimeout(timeout);
                 if (self.debug || ReconnectingWebSocket.debugAll) {
-                    console.debug('ReconnectingWebSocket', 'onopen', self.url);
+                    console.debug('ReconnectingWebSocket', 'onopen', url);
                 }
                 self.protocol = ws.protocol;
                 self.readyState = WebSocket.OPEN;
@@ -261,7 +265,7 @@
                     eventTarget.dispatchEvent(e);
                     if (!reconnectAttempt && !timedOut) {
                         if (self.debug || ReconnectingWebSocket.debugAll) {
-                            console.debug('ReconnectingWebSocket', 'onclose', self.url);
+                            console.debug('ReconnectingWebSocket', 'onclose', url);
                         }
                         eventTarget.dispatchEvent(generateEvent('close'));
                     }
@@ -275,7 +279,7 @@
             };
             ws.onmessage = function(event) {
                 if (self.debug || ReconnectingWebSocket.debugAll) {
-                    console.debug('ReconnectingWebSocket', 'onmessage', self.url, event.data);
+                    console.debug('ReconnectingWebSocket', 'onmessage', url, event.data);
                 }
                 var e = generateEvent('message');
                 e.data = event.data;
@@ -283,7 +287,7 @@
             };
             ws.onerror = function(event) {
                 if (self.debug || ReconnectingWebSocket.debugAll) {
-                    console.debug('ReconnectingWebSocket', 'onerror', self.url, event);
+                    console.debug('ReconnectingWebSocket', 'onerror', ws.url, event);
                 }
                 eventTarget.dispatchEvent(generateEvent('error'));
             };
@@ -302,7 +306,7 @@
         this.send = function(data) {
             if (ws) {
                 if (self.debug || ReconnectingWebSocket.debugAll) {
-                    console.debug('ReconnectingWebSocket', 'send', self.url, data);
+                    console.debug('ReconnectingWebSocket', 'send', data);
                 }
                 return ws.send(data);
             } else {
